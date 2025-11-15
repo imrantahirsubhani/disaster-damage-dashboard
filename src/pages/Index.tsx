@@ -93,16 +93,23 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Disaster Management Dashboard</h1>
-              <p className="text-muted-foreground mt-1">Track and manage house damage reports</p>
+      <header className="border-b bg-card/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
+                <AlertTriangle className="h-7 w-7" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  Disaster Relief Dashboard
+                </h1>
+                <p className="text-sm text-muted-foreground font-medium">House Damage Tracking & Management</p>
+              </div>
             </div>
-            <Button onClick={() => setShowForm(true)} size="lg">
+            <Button onClick={() => setShowForm(true)} size="lg" className="shadow-lg font-semibold">
               <Plus className="h-5 w-5 mr-2" />
-              New Report
+              Report Damage
             </Button>
           </div>
         </div>
@@ -110,11 +117,12 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatsCard
             title="Total Reports"
             value={totalReports}
             icon={Home}
+            trend={`${recentReports} new this week`}
             variant="default"
           />
           <StatsCard
@@ -124,31 +132,31 @@ const Index = () => {
             variant="warning"
           />
           <StatsCard
-            title="Recent (7 days)"
+            title="Recent Reports"
             value={recentReports}
             icon={Calendar}
-            trend={`${recentReports} new this week`}
+            trend="Last 7 days"
             variant="info"
           />
         </div>
 
         {/* Filters */}
-        <Card className="p-6">
+        <Card className="p-6 border-border shadow-md">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="Search by location, description, or reporter..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-12 h-12 text-base border-border focus:ring-2 focus:ring-primary"
               />
             </div>
-            <div className="w-full md:w-48">
+            <div className="flex gap-3">
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger>
+                <SelectTrigger className="w-[200px] h-12 border-border font-medium">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by type" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
@@ -161,28 +169,36 @@ const Index = () => {
               </Select>
             </div>
           </div>
+          <div className="mt-4 text-sm text-muted-foreground font-medium">
+            Showing {filteredHouses.length} of {totalReports} reports
+          </div>
         </Card>
 
         {/* Houses Grid */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading reports...</p>
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground font-medium">Loading reports...</p>
           </div>
         ) : filteredHouses.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Home className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No reports found</h3>
-            <p className="text-muted-foreground mb-6">
-              {searchTerm || filterType !== "all"
-                ? "Try adjusting your filters"
-                : "Get started by creating your first damage report"}
-            </p>
-            {!searchTerm && filterType === "all" && (
-              <Button onClick={() => setShowForm(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Report
-              </Button>
-            )}
+          <Card className="p-16 text-center border-border shadow-lg">
+            <div className="max-w-md mx-auto">
+              <div className="bg-muted/50 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <Home className="h-12 w-12 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">No reports found</h3>
+              <p className="text-muted-foreground mb-6 text-base">
+                {searchTerm || filterType !== "all"
+                  ? "Try adjusting your search or filter criteria"
+                  : "Start by reporting your first damage case to track and manage disaster relief efforts"}
+              </p>
+              {!searchTerm && filterType === "all" && (
+                <Button onClick={() => setShowForm(true)} size="lg" className="font-semibold">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Report First Damage
+                </Button>
+              )}
+            </div>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -206,9 +222,11 @@ const Index = () => {
           setEditingHouse(null);
         }
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingHouse ? "Edit Damage Report" : "New Damage Report"}</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden border-border shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-border">
+            <DialogTitle className="text-2xl font-bold">
+              {editingHouse ? "Edit Damage Report" : "New Damage Report"}
+            </DialogTitle>
           </DialogHeader>
           <HouseForm
             initialData={editingHouse ? {
@@ -233,61 +251,66 @@ const Index = () => {
 
       {/* View Details Dialog */}
       <Dialog open={!!selectedHouse} onOpenChange={(open) => !open && setSelectedHouse(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Damage Report Details</DialogTitle>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto border-border shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-border">
+            <DialogTitle className="text-2xl font-bold">Damage Report Details</DialogTitle>
           </DialogHeader>
           {selectedHouse && (
-            <div className="space-y-6">
+            <div className="space-y-8 pt-4">
               {selectedHouse.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {selectedHouse.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`Damage ${idx + 1}`}
-                      className="rounded-lg w-full aspect-video object-cover"
-                    />
+                    <div key={idx} className="relative overflow-hidden rounded-xl border border-border shadow-lg group">
+                      <img
+                        src={img}
+                        alt={`Damage ${idx + 1}`}
+                        className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full font-medium backdrop-blur-sm">
+                        Image {idx + 1}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Location</p>
-                  <p className="font-semibold">{selectedHouse.houseLocation}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Size</p>
-                  <p className="font-semibold">{selectedHouse.houseSize} Marla</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Damage Type</p>
-                  <p className="font-semibold">{selectedHouse.damageType}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Time</p>
-                  <p className="font-semibold">{format(new Date(selectedHouse.damageTime), "PPP p")}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Reported By</p>
-                  <p className="font-semibold">{selectedHouse.reportedBy}</p>
-                </div>
-                {selectedHouse.contactInfo && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Contact</p>
-                    <p className="font-semibold">{selectedHouse.contactInfo}</p>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-5 border-border bg-muted/30">
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Location</p>
+                  <p className="font-bold text-lg">{selectedHouse.houseLocation}</p>
+                </Card>
+                <Card className="p-5 border-border bg-muted/30">
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Size</p>
+                  <p className="font-bold text-lg">{selectedHouse.houseSize} Marla</p>
+                </Card>
+                <Card className="p-5 border-border bg-muted/30">
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Damage Type</p>
+                  <p className="font-bold text-lg capitalize">{selectedHouse.damageType}</p>
+                </Card>
+                <Card className="p-5 border-border bg-muted/30">
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Reported On</p>
+                  <p className="font-bold text-lg">{format(new Date(selectedHouse.damageTime), "PPP")}</p>
+                </Card>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Description</p>
-                <p className="text-foreground">{selectedHouse.damageDescription}</p>
+              <Card className="p-6 border-border bg-muted/30">
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Description</p>
+                <p className="text-foreground leading-relaxed text-base">{selectedHouse.damageDescription}</p>
+              </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-5 border-border bg-muted/30">
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Reported By</p>
+                  <p className="font-bold text-lg">{selectedHouse.reportedBy}</p>
+                </Card>
+                {selectedHouse.contactInfo && (
+                  <Card className="p-5 border-border bg-muted/30">
+                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Contact</p>
+                    <p className="font-bold text-lg">{selectedHouse.contactInfo}</p>
+                  </Card>
+                )}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
-
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

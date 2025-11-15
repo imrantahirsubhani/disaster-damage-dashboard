@@ -60,8 +60,8 @@ export const HouseForm = ({ initialData, onSubmit, onCancel, isLoading }: HouseF
   };
 
   return (
-    <Card className="p-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="max-h-[85vh] overflow-y-auto">
+      <form onSubmit={handleSubmit} className="space-y-6 p-1">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="houseLocation">House Location *</Label>
@@ -192,15 +192,15 @@ export const HouseForm = ({ initialData, onSubmit, onCancel, isLoading }: HouseF
           )}
         </div>
 
-        <div className="flex gap-4 pt-4">
-          <Button type="submit" disabled={isLoading} className="flex-1">
-            {isLoading ? "Submitting..." : initialData ? "Update Report" : "Submit Report"}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+        <div className="flex gap-3 pt-6 border-t">
+          <Button type="button" variant="outline" onClick={onCancel} className="flex-1 h-11 font-semibold">
             Cancel
+          </Button>
+          <Button type="submit" disabled={isLoading} className="flex-1 h-11 font-semibold shadow-lg">
+            {isLoading ? "Submitting..." : initialData ? "Update Report" : "Submit Report"}
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 };
