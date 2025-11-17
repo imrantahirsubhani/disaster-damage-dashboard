@@ -1,18 +1,22 @@
-import { useState, useEffect } from "react";
+'use client';
+
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { housesApi, House, CreateHouseData } from "@/lib/api";
+import { Sidebar } from "@/components/sidebar";
+import { TopBar } from "@/components/topbar";
 import { StatsCard } from "@/components/StatsCard";
 import { HouseCard } from "@/components/HouseCard";
 import { HouseForm } from "@/components/HouseForm";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ProfessionalDialog } from "@/components/professional-dialog"; // Fix import path for professional-dialog component
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Home, AlertTriangle, Calendar, Plus, Search, Filter } from "lucide-react";
+import { Building2, AlertTriangle, TrendingUp, Filter } from 'lucide-react';
 import { format } from "date-fns";
+import { DetailSection } from "@/components/detail-section";
+import { DetailGrid } from "@/components/detail-grid";
+import { DetailItem } from "@/components/detail-item";
 
 const Index = () => {
   const { toast } = useToast();
@@ -22,16 +26,13 @@ const Index = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingHouse, setEditingHouse] = useState<House | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
 
-  // Fetch houses
   const { data: houses = [], isLoading } = useQuery({
     queryKey: ['houses'],
     queryFn: housesApi.getAll,
   });
 
-  // Create mutation
   const createMutation = useMutation({
     mutationFn: housesApi.create,
     onSuccess: () => {
@@ -44,7 +45,6 @@ const Index = () => {
     },
   });
 
-  // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateHouseData> }) =>
       housesApi.update(id, data),
@@ -58,7 +58,6 @@ const Index = () => {
     },
   });
 
-  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: housesApi.delete,
     onSuccess: () => {
@@ -71,18 +70,15 @@ const Index = () => {
     },
   });
 
-  // Filter houses
   const filteredHouses = houses.filter((house) => {
-    const matchesSearch = house.houseLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         house.damageDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         house.reportedBy.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterType === "all" || house.damageType.toLowerCase() === filterType.toLowerCase();
-    return matchesSearch && matchesFilter;
+    return matchesFilter;
   });
 
-  // Calculate stats
   const totalReports = houses.length;
-  const damageTypes = [...new Set(houses.map(h => h.damageType))];
+  const severeDamage = houses.filter(h => 
+    ['earthquake', 'flood', 'fire'].includes(h.damageType.toLowerCase())
+  ).length;
   const recentReports = houses.filter(h => {
     const reportDate = new Date(h.damageTime);
     const weekAgo = new Date();
@@ -91,71 +87,53 @@ const Index = () => {
   }).length;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
-                <AlertTriangle className="h-7 w-7" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  Disaster Relief Dashboard
-                </h1>
-                <p className="text-sm text-muted-foreground font-medium">House Damage Tracking & Management</p>
-              </div>
+    <div className="flex h-screen bg-background">
+      <Sidebar />
+
+      <div className="flex-1 flex flex-col ml-64">
+        <TopBar onAddClick={() => setShowForm(true)} />
+
+        <main className="flex-1 overflow-y-auto pt-20 pb-8 px-8">
+          <div className="max-w-7xl mx-auto space-y-8">
+            {/* Page header */}
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+              <p className="text-muted-foreground mt-1">Track and manage disaster relief operations</p>
             </div>
-            <Button onClick={() => setShowForm(true)} size="lg" className="shadow-lg font-semibold">
-              <Plus className="h-5 w-5 mr-2" />
-              Report Damage
-            </Button>
-          </div>
-        </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatsCard
-            title="Total Reports"
-            value={totalReports}
-            icon={Home}
-            trend={`${recentReports} new this week`}
-            variant="default"
-          />
-          <StatsCard
-            title="Damage Types"
-            value={damageTypes.length}
-            icon={AlertTriangle}
-            variant="warning"
-          />
-          <StatsCard
-            title="Recent Reports"
-            value={recentReports}
-            icon={Calendar}
-            trend="Last 7 days"
-            variant="info"
-          />
-        </div>
-
-        {/* Filters */}
-        <Card className="p-6 border-border shadow-md">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search by location, description, or reporter..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 text-base border-border focus:ring-2 focus:ring-primary"
+            {/* Stats grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatsCard
+                title="Total Reports"
+                value={totalReports}
+                icon={Building2}
+                trend={`${recentReports} new this week`}
+                variant="default"
+              />
+              <StatsCard
+                title="Severe Damage"
+                value={severeDamage}
+                icon={AlertTriangle}
+                trend="Requires priority"
+                variant="warning"
+              />
+              <StatsCard
+                title="Recovery Rate"
+                value={`${Math.round((totalReports > 0 ? (recentReports / totalReports) * 100 : 0))}%`}
+                icon={TrendingUp}
+                trend="Last 7 days"
+                variant="success"
               />
             </div>
-            <div className="flex gap-3">
+
+            {/* Filter section */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                <span>Filter by damage type:</span>
+              </div>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[200px] h-12 border-border font-medium">
-                  <Filter className="h-4 w-4 mr-2" />
+                <SelectTrigger className="w-48 h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -168,152 +146,126 @@ const Index = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="mt-4 text-sm text-muted-foreground font-medium">
-            Showing {filteredHouses.length} of {totalReports} reports
-          </div>
-        </Card>
 
-        {/* Houses Grid */}
-        {isLoading ? (
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground font-medium">Loading reports...</p>
-          </div>
-        ) : filteredHouses.length === 0 ? (
-          <Card className="p-16 text-center border-border shadow-lg">
-            <div className="max-w-md mx-auto">
-              <div className="bg-muted/50 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                <Home className="h-12 w-12 text-muted-foreground/50" />
+            {/* Reports grid */}
+            {isLoading ? (
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary" />
+                </div>
+                <p className="text-muted-foreground mt-4">Loading reports...</p>
               </div>
-              <h3 className="text-2xl font-bold mb-3">No reports found</h3>
-              <p className="text-muted-foreground mb-6 text-base">
-                {searchTerm || filterType !== "all"
-                  ? "Try adjusting your search or filter criteria"
-                  : "Start by reporting your first damage case to track and manage disaster relief efforts"}
-              </p>
-              {!searchTerm && filterType === "all" && (
-                <Button onClick={() => setShowForm(true)} size="lg" className="font-semibold">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Report First Damage
-                </Button>
-              )}
-            </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredHouses.map((house) => (
-              <HouseCard
-                key={house._id}
-                house={house}
-                onView={(id) => setSelectedHouse(houses.find(h => h._id === id) || null)}
-                onEdit={(id) => setEditingHouse(houses.find(h => h._id === id) || null)}
-                onDelete={setDeleteId}
-              />
-            ))}
+            ) : filteredHouses.length === 0 ? (
+              <div className="text-center py-16 bg-card rounded-lg border border-border">
+                <Building2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No reports found</h3>
+                <p className="text-muted-foreground">Create your first damage report to get started</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredHouses.map((house) => (
+                  <HouseCard
+                    key={house._id}
+                    house={house}
+                    onView={(id) => setSelectedHouse(houses.find(h => h._id === id) || null)}
+                    onEdit={(id) => setEditingHouse(houses.find(h => h._id === id) || null)}
+                    onDelete={setDeleteId}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </main>
       </div>
 
-      {/* Create/Edit Form Dialog */}
-      <Dialog open={showForm || !!editingHouse} onOpenChange={(open) => {
-        if (!open) {
-          setShowForm(false);
-          setEditingHouse(null);
-        }
-      }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden border-border shadow-2xl">
-          <DialogHeader className="pb-4 border-b border-border">
-            <DialogTitle className="text-2xl font-bold">
-              {editingHouse ? "Edit Damage Report" : "New Damage Report"}
-            </DialogTitle>
-          </DialogHeader>
-          <HouseForm
-            initialData={editingHouse ? {
-              ...editingHouse,
-              existingImages: editingHouse.images,
-            } : undefined}
-            onSubmit={(data) => {
-              if (editingHouse) {
-                updateMutation.mutate({ id: editingHouse._id, data });
-              } else {
-                createMutation.mutate(data);
-              }
-            }}
-            onCancel={() => {
-              setShowForm(false);
-              setEditingHouse(null);
-            }}
-            isLoading={createMutation.isPending || updateMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
+      <ProfessionalDialog
+        open={showForm || !!editingHouse}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowForm(false);
+            setEditingHouse(null);
+          }
+        }}
+        title={editingHouse ? "Edit Damage Report" : "New Damage Report"}
+        size="xl"
+      >
+        <HouseForm
+          initialData={editingHouse ? {
+            ...editingHouse,
+            existingImages: editingHouse.images,
+          } : undefined}
+          onSubmit={(data) => {
+            if (editingHouse) {
+              updateMutation.mutate({ id: editingHouse._id, data });
+            } else {
+              createMutation.mutate(data);
+            }
+          }}
+          onCancel={() => {
+            setShowForm(false);
+            setEditingHouse(null);
+          }}
+          isLoading={createMutation.isPending || updateMutation.isPending}
+        />
+      </ProfessionalDialog>
 
-      {/* View Details Dialog */}
-      <Dialog open={!!selectedHouse} onOpenChange={(open) => !open && setSelectedHouse(null)}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto border-border shadow-2xl">
-          <DialogHeader className="pb-4 border-b border-border">
-            <DialogTitle className="text-2xl font-bold">Damage Report Details</DialogTitle>
-          </DialogHeader>
-          {selectedHouse && (
-            <div className="space-y-8 pt-4">
-              {selectedHouse.images.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <ProfessionalDialog
+        open={!!selectedHouse}
+        onOpenChange={(open) => !open && setSelectedHouse(null)}
+        title="Damage Report Details"
+        size="2xl"
+      >
+        {selectedHouse && (
+          <div className="space-y-6">
+            {/* Evidence Images Section */}
+            {selectedHouse.images.length > 0 && (
+              <DetailSection title="Evidence Images">
+                <div className="grid grid-cols-2 gap-4">
                   {selectedHouse.images.map((img, idx) => (
-                    <div key={idx} className="relative overflow-hidden rounded-xl border border-border shadow-lg group">
+                    <div key={idx} className="rounded-lg overflow-hidden border border-border/50 aspect-video bg-muted">
                       <img
-                        src={img}
+                        src={img || "/placeholder.svg"}
                         alt={`Damage ${idx + 1}`}
-                        className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
                       />
-                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full font-medium backdrop-blur-sm">
-                        Image {idx + 1}
-                      </div>
                     </div>
                   ))}
                 </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="p-5 border-border bg-muted/30">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Location</p>
-                  <p className="font-bold text-lg">{selectedHouse.houseLocation}</p>
-                </Card>
-                <Card className="p-5 border-border bg-muted/30">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Size</p>
-                  <p className="font-bold text-lg">{selectedHouse.houseSize} Marla</p>
-                </Card>
-                <Card className="p-5 border-border bg-muted/30">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Damage Type</p>
-                  <p className="font-bold text-lg capitalize">{selectedHouse.damageType}</p>
-                </Card>
-                <Card className="p-5 border-border bg-muted/30">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Reported On</p>
-                  <p className="font-bold text-lg">{format(new Date(selectedHouse.damageTime), "PPP")}</p>
-                </Card>
+              </DetailSection>
+            )}
+
+            {/* Property Details Section */}
+            <DetailSection title="Property Details">
+              <DetailGrid cols={2}>
+                <DetailItem label="Location" value={selectedHouse.houseLocation} />
+                <DetailItem label="Size" value={`${selectedHouse.houseSize} Marla`} />
+                <DetailItem label="Damage Type" value={selectedHouse.damageType} />
+                <DetailItem label="Reported Date" value={format(new Date(selectedHouse.damageTime), "PPP")} />
+              </DetailGrid>
+            </DetailSection>
+
+            {/* Description Section */}
+            <DetailSection title="Damage Description">
+              <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                <p className="text-foreground whitespace-pre-wrap leading-relaxed">{selectedHouse.damageDescription}</p>
               </div>
-              <Card className="p-6 border-border bg-muted/30">
-                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Description</p>
-                <p className="text-foreground leading-relaxed text-base">{selectedHouse.damageDescription}</p>
-              </Card>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="p-5 border-border bg-muted/30">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Reported By</p>
-                  <p className="font-bold text-lg">{selectedHouse.reportedBy}</p>
-                </Card>
+            </DetailSection>
+
+            {/* Reporter Information Section */}
+            <DetailSection title="Reporter Information">
+              <DetailGrid cols={2}>
+                <DetailItem label="Reported By" value={selectedHouse.reportedBy} />
                 {selectedHouse.contactInfo && (
-                  <Card className="p-5 border-border bg-muted/30">
-                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Contact</p>
-                    <p className="font-bold text-lg">{selectedHouse.contactInfo}</p>
-                  </Card>
+                  <DetailItem label="Contact" value={selectedHouse.contactInfo} />
                 )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-      {/* Delete Confirmation */}
+              </DetailGrid>
+            </DetailSection>
+          </div>
+        )}
+      </ProfessionalDialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Report</AlertDialogTitle>
             <AlertDialogDescription>

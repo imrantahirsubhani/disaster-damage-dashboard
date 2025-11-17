@@ -41,13 +41,13 @@ export const housesApi = {
     return response.data;
   },
 
-  // Get single house
+  // Get a single house by ID
   getById: async (id: string): Promise<House> => {
     const response = await api.get(`/houses/details/${id}`);
     return response.data;
   },
 
-  // Create house
+  // Create a new house report
   create: async (data: CreateHouseData): Promise<House> => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
@@ -64,7 +64,7 @@ export const housesApi = {
     return response.data.house;
   },
 
-  // Update house
+  // Update house report
   update: async (id: string, data: Partial<CreateHouseData>): Promise<House> => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
@@ -81,12 +81,12 @@ export const housesApi = {
     return response.data.house;
   },
 
-  // Delete house
+  // Delete house report
   delete: async (id: string): Promise<void> => {
     await api.delete(`/houses/${id}`);
   },
 
-  // Replace images
+  // Replace images for the house report
   replaceImages: async (id: string, images: File[]): Promise<House> => {
     const formData = new FormData();
     images.forEach((file) => formData.append('images', file));
