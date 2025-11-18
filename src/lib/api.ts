@@ -1,14 +1,16 @@
+// src/api/api.ts
 import axios from 'axios';
+import BASE_URL from '../lib/baseUrl'; // Import your centralized base URL
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
+// Axios instance
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Interfaces
 export interface House {
   _id: string;
   houseLocation: string;
@@ -34,6 +36,7 @@ export interface CreateHouseData {
   images?: File[];
 }
 
+// Houses API
 export const housesApi = {
   // Get all houses
   getAll: async (): Promise<House[]> => {
@@ -41,13 +44,13 @@ export const housesApi = {
     return response.data;
   },
 
-  // Get a single house by ID
+  // Get house by ID
   getById: async (id: string): Promise<House> => {
     const response = await api.get(`/houses/details/${id}`);
     return response.data;
   },
 
-  // Create a new house report
+  // Create a house report
   create: async (data: CreateHouseData): Promise<House> => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
@@ -86,7 +89,7 @@ export const housesApi = {
     await api.delete(`/houses/${id}`);
   },
 
-  // Replace images for the house report
+  // Replace images
   replaceImages: async (id: string, images: File[]): Promise<House> => {
     const formData = new FormData();
     images.forEach((file) => formData.append('images', file));
@@ -97,3 +100,5 @@ export const housesApi = {
     return response.data.house;
   },
 };
+
+export default api;

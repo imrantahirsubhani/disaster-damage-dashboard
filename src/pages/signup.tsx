@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, Lock, User, Eye, EyeOff, Check } from 'lucide-react';
+import BASE_URL from '@/lib/baseUrl';
 
 export function SignupForm() {
   const [name, setName] = useState('');
@@ -34,7 +35,7 @@ export function SignupForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const response = await fetch(`${BASE_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
