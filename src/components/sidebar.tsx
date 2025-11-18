@@ -3,6 +3,7 @@
 import { Building2, Activity, Users, Settings, FileText, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
+import { useAuth } from '@/contexts/AuthContext';
 
 const menuItems = [
   { icon: Home, label: 'Dashboard', href: '#', active: true },
@@ -14,15 +15,14 @@ const menuItems = [
 
 export const Sidebar = () => {
   const navigate = useNavigate(); // Initialize useNavigate
+  const { logout } = useAuth(); // Use logout from AuthContext
 
   // Function to log out and navigate to login page
-  const handleLogout = () => {
-    // Remove token from localStorage
-    localStorage.removeItem('token');
-
-    // Navigate to the login page or any other page
-    navigate('/login'); // Redirect to the login page
+ const handleLogout = () => {
+    logout();           // ✅ Updates isAuthenticated to false
+    navigate('/login'); // ✅ Redirect to login
   };
+
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex flex-col">

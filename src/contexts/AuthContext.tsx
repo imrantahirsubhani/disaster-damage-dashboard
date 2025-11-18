@@ -1,50 +1,42 @@
-'use client';
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// src/contexts/AuthContext.tsx
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface AuthContextType {
-  token: string | null;
+  isAuthenticated: boolean;
   login: (token: string) => void;
   logout: () => void;
-  isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  login: () => {},
+  logout: () => {},
+});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Check localStorage on mount
   useEffect(() => {
-    // Check for token in localStorage on app start
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
+    const token = localStorage.getItem('adminToken');
+    if (token) setIsAuthenticated(true);
   }, []);
 
-  const login = (newToken: string) => {
-    setToken(newToken);
-    localStorage.setItem('token', newToken);
+  const login = (token: string) => {
+    localStorage.setItem('adminToken', token);
+    setIsAuthenticated(true);
   };
 
   const logout = () => {
-    setToken(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
+    setIsAuthenticated(false);
   };
 
-  const isAuthenticated = !!token;
-
   return (
-    <AuthContext.Provider value={{ token, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

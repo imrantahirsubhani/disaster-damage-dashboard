@@ -3,8 +3,12 @@
 import { useState } from 'react';
 import { Mail, Lock, User, Eye, EyeOff, Check } from 'lucide-react';
 import BASE_URL from '@/lib/baseUrl';
+import api from '@/lib/api'; // <-- import your Axios instance
+import { useNavigate } from 'react-router-dom';
+
 
 export function SignupForm() {
+  const navigate = useNavigate()
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,57 +25,20 @@ export function SignupForm() {
     setError('');
     setSuccess('');
 
-    // Validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (!agreedToTerms) {
-      setError('Please agree to the Terms of Service and Privacy Policy');
-      return;
-    }
-
     setIsLoading(true);
-
     try {
-      const response = await fetch(`${BASE_URL}/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name, // Include name if your backend expects it
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      // Registration successful
-      setSuccess('Account created successfully!');
+      const { data } = await api.post('/auth/signup', { name, email, password }); 
       console.log('Signup successful:', data);
+      setSuccess('Account created successfully!');
+      navigate('/login')
       
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        // You might want to redirect or update app state here
-      }
-
-      // Reset form
-      setName('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setAgreedToTerms(false);
-
     } catch (err: any) {
-      setError(err.message || 'An error occurred during registration');
-      console.error('Signup error:', err);
+      setError(err.response?.data?.message || 'Signup failed');
     } finally {
       setIsLoading(false);
     }
